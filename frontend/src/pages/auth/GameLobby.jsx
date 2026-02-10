@@ -1,21 +1,39 @@
-import React from 'react';
-import { Users, Code, Zap } from 'lucide-react';
+import React from "react";
+import { Users, Code, Zap } from "lucide-react";
+import { usePlayerStore } from "../../store/player-auth-store";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function GameLobby() {
+  const { playerAuth, checkAuthOnRefresh, isCheckingAuth } = usePlayerStore();
+  const navigate = useNavigate();
+
+  if (isCheckingAuth) return <div>Checking auth...</div>;
+  if (!playerAuth) return navigate("/login");
+
   const gameInfo = {
     level: "Basic",
     id: "123",
-    language: "JavaScript"
+    language: "JavaScript",
   };
 
   const players = [
-    { name: "Adarsh", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Adarsh" },
-    { name: "Sahil", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sahil" },
-    { name: "Aman", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aman" }
+    {
+      name: "Adarsh",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Adarsh",
+    },
+    {
+      name: "Sahil",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sahil",
+    },
+    {
+      name: "Aman",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aman",
+    },
   ];
 
   const handleStart = () => {
-    console.log('Game starting...');
+    console.log("Game starting...");
   };
 
   return (
@@ -49,27 +67,39 @@ export default function GameLobby() {
               <div className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-yellow-400/50 transition-all duration-300">
                 <div className="flex items-center gap-2 mb-2">
                   <Zap className="w-5 h-5 text-yellow-400" />
-                  <p className="text-sm text-gray-400 uppercase tracking-wider">Level</p>
+                  <p className="text-sm text-gray-400 uppercase tracking-wider">
+                    Level
+                  </p>
                 </div>
-                <p className="text-2xl font-bold text-yellow-400">{gameInfo.level}</p>
+                <p className="text-2xl font-bold text-yellow-400">
+                  {gameInfo.level}
+                </p>
               </div>
 
               {/* Room ID */}
               <div className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-blue-400/50 transition-all duration-300">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-5 h-5 text-blue-400 font-mono">#</div>
-                  <p className="text-sm text-gray-400 uppercase tracking-wider">Room ID</p>
+                  <p className="text-sm text-gray-400 uppercase tracking-wider">
+                    Room ID
+                  </p>
                 </div>
-                <p className="text-2xl font-bold text-blue-400 font-mono">{gameInfo.id}</p>
+                <p className="text-2xl font-bold text-blue-400 font-mono">
+                  {gameInfo.id}
+                </p>
               </div>
 
               {/* Language */}
               <div className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-green-400/50 transition-all duration-300">
                 <div className="flex items-center gap-2 mb-2">
                   <Code className="w-5 h-5 text-green-400" />
-                  <p className="text-sm text-gray-400 uppercase tracking-wider">Language</p>
+                  <p className="text-sm text-gray-400 uppercase tracking-wider">
+                    Language
+                  </p>
                 </div>
-                <p className="text-2xl font-bold text-green-400">{gameInfo.language}</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {gameInfo.language}
+                </p>
               </div>
             </div>
 
@@ -130,7 +160,9 @@ export default function GameLobby() {
         <div className="mt-12 text-center">
           <div className="inline-flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/10">
             <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-            <p className="text-gray-400">Waiting for host to start the game...</p>
+            <p className="text-gray-400">
+              Waiting for host to start the game...
+            </p>
           </div>
         </div>
       </main>

@@ -1,33 +1,38 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from "react";
+import { usePlayerStore } from "../store/player-auth-store";
 
 const HomePage = () => {
-    const [roomCode, setRoomCode] = useState('');
+  const [roomCode, setRoomCode] = useState("");
+  const { playerAuth, checkAuthOnRefresh } = usePlayerStore();
 
   const handlePlay = () => {
-    console.log('Play clicked');
+    console.log("Play clicked");
   };
 
   const handleCreate = () => {
-    console.log('Create room clicked');
+    console.log("Create room clicked");
   };
 
   const handleJoin = () => {
-    console.log('Join room:', roomCode);
+    console.log("Join room:", roomCode);
   };
   return (
-   <div className="min-h-screen bg-gradient-to-br from-[#262624] to-[#1a1a19] flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#262624] to-[#1a1a19] flex items-center justify-center relative overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px),
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px),
                            repeating-linear-gradient(90deg, transparent, transparent 2px, white 2px, white 3px)`,
-          backgroundSize: '50px 50px'
-        }}></div>
+            backgroundSize: "50px 50px",
+          }}
+        ></div>
       </div>
 
       {/* Floating code elements */}
       <div className="absolute top-[10%] left-[10%] text-white/10 font-mono text-xl animate-pulse">
-        {'{'} code {'}'}
+        {"{"} code {"}"}
       </div>
       <div className="absolute top-[20%] right-[15%] text-white/10 font-mono text-xl animate-pulse delay-1000">
         function()
@@ -36,7 +41,7 @@ const HomePage = () => {
         const x =
       </div>
       <div className="absolute bottom-[25%] right-[12%] text-white/10 font-mono text-xl animate-pulse delay-3000">
-        {'</>'}
+        {"</>"}
       </div>
 
       {/* Main content */}
@@ -45,7 +50,7 @@ const HomePage = () => {
         <h1 className="text-7xl font-black mb-3 bg-gradient-to-r from-[#F9D72F] via-yellow-400 to-amber-300 bg-clip-text text-transparent tracking-tight">
           CodeBattle
         </h1>
-        
+
         {/* Tagline */}
         <p className="text-xl text-gray-400 mb-16 tracking-widest uppercase">
           Compete. Code. Conquer.
@@ -78,7 +83,7 @@ const HomePage = () => {
               placeholder="Join Room"
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
+              onKeyPress={(e) => e.key === "Enter" && handleJoin()}
               className="flex-1 px-4 py-3 bg-transparent text-white placeholder-gray-500 outline-none text-base"
             />
             <button
@@ -98,7 +103,7 @@ const HomePage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

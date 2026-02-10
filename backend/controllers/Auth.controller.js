@@ -7,6 +7,7 @@ import { UserModel } from "../models/user.model.js";
 ===================================================== */
 export const handleSignUp = async (req, res) => {
   // Extract data coming from the frontend request body
+  console.log("hittttt", req.body);
   const { playerName, email, password } = req.body;
 
   // Validate empty fields
@@ -100,7 +101,7 @@ export const handleLogIn = async (req, res) => {
     // 2️⃣ Check password
     const isPasswordCorrect = await bcrypt.compare(
       password,
-      foundUser.password
+      foundUser.password,
     );
 
     if (!isPasswordCorrect) {
@@ -123,12 +124,11 @@ export const handleLogIn = async (req, res) => {
       secure: process.env.SERVER_ENV !== "development", // secure in production
     });
 
-
     // Send user info (no password)
     res.status(200).json({
       _id: foundUser._id,
       playerName: foundUser.playerName,
-      email: foundUser.email
+      email: foundUser.email,
     });
   } catch (error) {
     console.log(error);
@@ -149,7 +149,6 @@ export const handleLogOut = (req, res) => {
     res.status(400).json({ message: "Failed logout" });
   }
 };
-
 
 /* =====================================================
    🔍 CHECK AUTH CONTROLLER

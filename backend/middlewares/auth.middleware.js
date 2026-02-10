@@ -22,9 +22,8 @@ export const protectRoute = async (req, res, next) => {
 
     // get user id from the token and fetch userdata from database
     const { userId } = decryptedToken;
-    const fetchedUserData = await UserModel.findById(userId).select(
-      "-password"
-    );
+    const fetchedUserData =
+      await UserModel.findById(userId).select("-password");
 
     if (!fetchedUserData)
       return res.status(404).json({ message: "Invalid - User not found" });
@@ -61,9 +60,8 @@ export const protectRouteForCookie = async (req, res, next) => {
 
     // get user id from the token and fetch userdata from database
     const { userId } = decryptedToken;
-    const fetchedUserData = await UserModel.findById(userId).select(
-      "-password"
-    );
+    const fetchedUserData =
+      await UserModel.findById(userId).select("-password");
 
     if (!fetchedUserData) {
       req.user = null;
