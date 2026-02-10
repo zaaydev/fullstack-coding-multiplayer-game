@@ -7,7 +7,8 @@ import dotenv from "dotenv";
 import aiRoutes from "../routes/ai.route.js";
 
 const express_server = express();
-
+import Auth_router from "../routes/auth.routes.js";
+import db from "../utils/mongodb.connect.js"
 // allow env variables usecase
 dotenv.config();
 
@@ -22,11 +23,12 @@ express_server.use(
 
 // middlewares
 express_server.use("/api/ai", aiRoutes);
+express_server.use("/user", Auth_router);
 
 express_server.get("/", (req, res) => {
   res.send("Hi Server!");
 });
 
-express_server.listen(8000, () => {
-  console.log("🚀 SERVER STARTED 8000");
+express_server.listen(process.env.PORT, () => {
+  console.log(`🚀 SERVER STARTED ${process.env.PORT}`);
 });
