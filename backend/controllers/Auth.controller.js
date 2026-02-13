@@ -7,7 +7,6 @@ import { UserModel } from "../models/user.model.js";
 ===================================================== */
 export const handleSignUp = async (req, res) => {
   // Extract data coming from the frontend request body
-  console.log("hittttt", req.body);
   const { playerName, email, password } = req.body;
 
   // Validate empty fields
