@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import cookie_parser from "cookie-parser";
 import dotenv from "dotenv";
+import http from "http";
+import { Server } from "socket.io";
 
 // local imports
 import aiRoutes from "../routes/ai.route.js";
@@ -12,7 +14,26 @@ import db from "../utils/mongodb.connect.js";
 
 // allow env variables usecase
 dotenv.config();
+
+// servers
+
+// 🧱 Express app handles normal HTTP routes (REST APIs)
 const express_server = express();
+
+// 🌐 We manually create an HTTP server from express
+// WHY?
+// Because Socket.IO needs access to the raw HTTP server.
+// It upgrades HTTP connections into WebSocket connections internally.
+const http_server = http.createServer(express_server);
+
+// ⚡ Attach Socket.IO to the HTTP server
+// WHY?
+// Socket.IO sits on top of HTTP and handles real-time communication.
+const socket_server = new Server(http_server, {
+  cors: {
+    origin: "*", // allow connections from anywhere (dev mode)
+  },
+});
 
 // request middlewares
 express_server.use(express.json());
@@ -33,6 +54,137 @@ express_server.get("/", (req, res) => {
   res.send("Hi Server!");
 });
 
-express_server.listen(process.env.PORT, () => {
+// ==============================
+// ⚡ SOCKET.IO SECTION
+// ==============================
+
+// 🧠 In-memory object to store all game rooms
+// WHY?
+// This acts like a temporary database.
+// It lives in RAM.
+// If server restarts → everything resets.
+const rooms = {};
+
+// 🔌 When a new client connects to socket server
+// This runs EVERY time a user opens your site.
+socket_server.on("connection", (socket) => {
+  console.log("socket connected");
+
+  // Each user gets a unique socket.id automatically.
+  // This ID represents their live connection session.
+
+  // ==========================
+  // 🏗 CREATE ROOM
+  // ==========================
+
+  // This runs when frontend emits "create-room"
+  socket.on("create-room", ({ frontend_user_id }) => {
+    // 🎲 Generate simple random room ID
+    // WHY?
+    // So players can share this ID and join same room.
+    const randomId = Math.floor(Math.random() * 100);
+
+    // 🚪 Join a Socket.IO internal room
+    // IMPORTANT:
+    // This is NOT your JS room object.
+    // This is a communication channel managed by Socket.IO.
+    // It groups sockets so we can broadcast to specific players.
+    socket.join(randomId);
+
+    // 🧱 Create room structure in server memory
+    // WHY?
+    // We need to track players, host, ready states, etc.
+    rooms[randomId] = {
+      room_id: randomId,
+
+      // 👑 Host info
+      // WHY store socket_id?
+      // So later we can identify or disconnect host if needed.
+      host_socket_id: socket.id,
+      host_user_id: frontend_user_id,
+
+      // 👥 Players array
+      players: [
+        {
+          user_id: frontend_user_id,
+          socket_id: socket.id,
+          ready: false, // initially not ready
+        },
+      ],
+
+      room_status: "waiting", // game not started yet
+    };
+
+    // 📤 Send created room ONLY to creator
+    // WHY socket.emit?
+    // Because only the creator needs initial room confirmation.
+    socket.emit("room-created", { data: rooms[randomId] });
+  });
+
+  // ==========================
+  // 🚪 JOIN ROOM
+  // ==========================
+
+  socket.on("join-room", ({ frontend_user_id, room_id }) => {
+    // 🚪 Join the internal Socket.IO communication room
+    // WHY?
+    // So this socket can receive broadcasts for this room.
+    socket.join(room_id);
+
+    // ➕ Add player into server memory room object
+    // WHY?
+    // We must track who is inside, their socket id and ready state.
+    rooms[room_id].players.push({
+      user_id: frontend_user_id,
+      socket_id: socket.id,
+      ready: false,
+    });
+
+    // 📡 Broadcast updated room to EVERYONE inside this room
+    // socket_server.to(room_id)
+    // means:
+    // "Send event only to sockets inside this specific room"
+    socket_server.to(room_id).emit("room-updated", {
+      data: rooms[room_id],
+    });
+  });
+
+  // ==========================
+  // 🎮 PLAYER READY TOGGLE
+  // ==========================
+
+  socket.on("player-ready", ({ frontend_user_id, room_id }) => {
+    // 📦 Get room from memory
+    const room = rooms[room_id];
+
+    // 🔍 Find the correct player object
+    // WHY?
+    // Because we need to update only this player's ready state.
+    const player = room.players.find(
+      (player) => player.user_id == frontend_user_id,
+    );
+
+    // 🔄 Toggle ready state (true → false or false → true)
+    // WHY toggle?
+    // So one button can act as Ready / Unready.
+    player.ready = !player.ready;
+
+    // 📡 Broadcast updated room state to everyone
+    // WHY broadcast?
+    // So all clients stay synchronized in real-time.
+    socket_server.to(room_id).emit("room-updated", {
+      data: room,
+    });
+  });
+});
+
+// ==============================
+// 🚀 START SERVER
+// ==============================
+
+// Start listening on given port
+// WHY http_server and not express_server?
+// Because Socket.IO is attached to http_server.
+http_server.listen(process.env.PORT, () => {
   console.log(`🚀 SERVER STARTED ${process.env.PORT}`);
 });
