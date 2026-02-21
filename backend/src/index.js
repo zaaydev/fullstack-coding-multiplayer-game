@@ -11,12 +11,12 @@ import aiRoutes from "../routes/ai.route.js";
 
 import Auth_router from "../routes/auth.routes.js";
 import db from "../utils/mongodb.connect.js";
+import generateAiResponse from "../lib/ai.js";
 
 // allow env variables usecase
 dotenv.config();
 
 // servers
-
 // 🧱 Express app handles normal HTTP routes (REST APIs)
 const express_server = express();
 
@@ -46,7 +46,7 @@ express_server.use(
 // 🍪 Parse cookies from requests
 express_server.use(cookie_parser());
 
-// middlewares
+// routes middlewares
 express_server.use("/api/ai", aiRoutes);
 express_server.use("/api/user", Auth_router);
 
@@ -174,6 +174,30 @@ socket_server.on("connection", (socket) => {
     // So all clients stay synchronized in real-time.
     socket_server.to(room_id).emit("room-updated", {
       data: room,
+    });
+  });
+
+  // start game
+  socket.on("start-game", async ({ frontend_user_id, room_id }) => {
+    if (frontend_user_id !== rooms[room_id].host_user_id) return;
+
+    const questionPrompt =
+      "give me very simple coding problem. could be solved with all programming languages. just respond with question, respond with 2 lines max, respond question only";
+
+    let generatedQuestion;
+    try {
+      generatedQuestion = await generateAiResponse(questionPrompt);
+    } catch (error) {
+      console.log(error);
+      generatedQuestion = "nothing generated";
+    }
+
+    rooms[room_id].room_status = "playing";
+
+    socket_server.to(room_id).emit("game-started", {
+      room_id,
+      newRoomData: rooms[room_id],
+      generatedQuestion,
     });
   });
 });

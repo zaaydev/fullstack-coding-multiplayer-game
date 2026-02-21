@@ -1,12 +1,11 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import HomePage from "./pages/HomePage";
-import CodeEditor from "./components/CodeEditor";
 import SignupPage from "./components/auth/sign-up";
 import LoginPage from "./components/auth/login";
-import GamePlay from "./pages/auth/GamePlay";
-import GameLobby from "./pages/auth/GameLobby";
 import { useEffect } from "react";
 import { usePlayerStore } from "./store/player-auth-store";
+import LobbyPage from "./pages/lobby";
+import GameplayPage from "./pages/auth/gameplay";
+import RoomPage from "./pages/auth/game-room";
 
 function App() {
   const { playerAuth, checkAuthOnRefresh, isCheckingAuth } = usePlayerStore();
@@ -14,19 +13,33 @@ function App() {
   useEffect(() => {
     checkAuthOnRefresh();
   }, []);
+
   return (
     <>
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/lobby" element={<GameLobby />} />
-          <Route path="/gameplay" element={<GamePlay />} />
-          <Route path="/editor" element={<CodeEditor />} />
+          <Route path="/" element={<LobbyPage />} />
+          <Route
+            path="/room"
+            element={playerAuth ? <RoomPage /> : <LoginPage />}
+          />
 
           {/* Auth Routes */}
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/signup"
+            element={playerAuth ? <LobbyPage /> : <SignupPage />}
+          />
+          <Route
+            path="/login"
+            element={playerAuth ? <LobbyPage /> : <LoginPage />}
+          />
+
+          {/* Gameplay Routes */}
+          <Route
+            path="/gameplay/:roomid"
+            element={playerAuth ? <GameplayPage /> : <LoginPage />}
+          />
         </Routes>
       </BrowserRouter>
     </>

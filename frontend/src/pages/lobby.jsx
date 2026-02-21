@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { usePlayerStore } from "../store/player-auth-store";
+import { useNavigate } from "react-router-dom";
 
-const HomePage = () => {
+const LobbyPage = () => {
   const [roomCode, setRoomCode] = useState("");
   const { playerAuth, checkAuthOnRefresh } = usePlayerStore();
+  const navigate = useNavigate();
 
   const handlePlay = () => {
     console.log("Play clicked");
@@ -17,7 +19,7 @@ const HomePage = () => {
     console.log("Join room:", roomCode);
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#262624] to-[#1a1a19] flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-[#262624] to-[#1a1a19] flex items-center justify-center relative overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div
@@ -60,8 +62,8 @@ const HomePage = () => {
         <div className="flex flex-col items-center gap-5">
           {/* Play button */}
           <button
-            onClick={handlePlay}
-            className="w-72 px-10 py-5 text-xl font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl uppercase tracking-widest shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/60 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
+            onClick={() => navigate("/room")}
+            className="w-72 px-10 py-5 text-xl font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl uppercase tracking-widest shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/60 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
           >
             <span className="relative z-10">Play</span>
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
@@ -106,4 +108,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default LobbyPage;
