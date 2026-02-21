@@ -27,14 +27,8 @@ export const usePlayerStore = create((set, get) => ({
       // 🔍 Ask backend if cookie/session is still valid
       const res = await BackendApi.get("/api/user/check");
 
-      // 🧾 Backend response log
-      console.log("Got Data From Backend 1", res.data.user);
-
       // ✅ User is authenticated → store user in state
       set({ playerAuth: res.data.user });
-
-      // 🧠 Confirm updated state using Zustand getter
-      console.log("player auth available 2", get().playerAuth);
     } catch (error) {
       // ❌ Session expired or invalid
       console.log("Error Checking Refresh", error);
