@@ -2,12 +2,19 @@ import { useState } from "react";
 import CodeEditor from "../../components/editor/code-editor";
 import OutputScreen from "../../components/editor/output-screen";
 import { useGameStore } from "../../store/game-store";
+import { socket } from "../../lib/socket-io";
+import { usePlayerStore } from "../../store/player-auth-store";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
 
 const GameplayPage = () => {
-  const [code, setCode] = useState("// Write your code here");
   const [runCode, setRunCode] = useState("");
   const [runKey, setRunKey] = useState(0);
-  const { room, setRoom, aiQuestion } = useGameStore();
+  const { room, setRoom, setScores, aiQuestion, code, setCode } =
+    useGameStore();
+  const { playerAuth } = usePlayerStore();
+  const { roomid } = useParams();
+  const navigate = useNavigate();
 
   function handleRun() {
     setRunCode(code);
@@ -15,13 +22,33 @@ const GameplayPage = () => {
   }
 
   function handleReset() {
-    setCode("// Done Reset! Write your code here");
+    setCode("/  / Done Reset! Write your code here");
     setRunKey((prev) => prev + 1);
   }
 
   async function handleSubmit() {
-    console.log("Submitting for AI review:", code);
+    if (!code) return alert("write something");
+
+    socket.emit("submit-code", {
+      frontend_user_id: playerAuth._id,
+      room_id: room.room_id,
+      the_code: code,
+    });
   }
+
+  useEffect(() => {
+    socket.on("all-player-submitted", (payload) => {
+      setScores(payload.data);
+      navigate(`/scores/${payload.room_id}`);
+    });
+
+    socket.on("current-player-submitted", (payload) => {});
+
+    return () => {
+      socket.off("all-player-submitted");
+      socket.off("current-player-submitted");
+    };
+  }, []);
 
   return (
     <main className="h-screen w-full bg-zinc-900 text-white flex flex-col overflow-hidden">

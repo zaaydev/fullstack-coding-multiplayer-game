@@ -6,6 +6,7 @@ import { usePlayerStore } from "./store/player-auth-store";
 import LobbyPage from "./pages/lobby";
 import GameplayPage from "./pages/auth/gameplay";
 import RoomPage from "./pages/auth/game-room";
+import ScorePage from "./pages/auth/scores-page";
 
 function App() {
   const { playerAuth, checkAuthOnRefresh, isCheckingAuth } = usePlayerStore();
@@ -24,7 +25,7 @@ function App() {
             path="/room"
             element={playerAuth ? <RoomPage /> : <LoginPage />}
           />
-
+  
           {/* Auth Routes */}
           <Route
             path="/signup"
@@ -39,6 +40,10 @@ function App() {
           <Route
             path="/gameplay/:roomid"
             element={playerAuth ? <GameplayPage /> : <LoginPage />}
+          />
+          <Route
+            path="/scores/:roomid"
+            element={playerAuth ? <ScorePage /> : <LoginPage />}
           />
         </Routes>
       </BrowserRouter>
