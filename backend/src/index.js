@@ -12,6 +12,7 @@ import aiRoutes from "../routes/ai.route.js";
 import Auth_router from "../routes/auth.routes.js";
 import db from "../utils/mongodb.connect.js";
 import generateAiResponse from "../lib/ai.js";
+import { UserModel } from "../models/user.model.js";
 
 // allow env variables usecase
 dotenv.config();
@@ -70,6 +71,10 @@ const rooms = {};
 socket_server.on("connection", (socket) => {
   console.log("socket connected");
 
+  socket.on("disconnect", () => {
+    console.log("socket disconnected");
+  });
+
   // Each user gets a unique socket.id automatically.
   // This ID represents their live connection session.
 
@@ -108,11 +113,14 @@ socket_server.on("connection", (socket) => {
         {
           user_id: frontend_user_id,
           socket_id: socket.id,
-          ready: false, // initially not ready
+          ready: false, // initially not ready,
+          submitted: false,
         },
       ],
 
+      submissions: [],
       room_status: "waiting", // game not started yet
+      scores: [],
     };
 
     // 📤 Send created room ONLY to creator
@@ -186,7 +194,9 @@ socket_server.on("connection", (socket) => {
 
     let generatedQuestion;
     try {
-      generatedQuestion = await generateAiResponse(questionPrompt);
+      // off for now
+      // generatedQuestion = await generateAiResponse(questionPrompt);
+      generatedQuestion = "Given two numbers, calculate their sum.";
     } catch (error) {
       console.log(error);
       generatedQuestion = "nothing generated";
@@ -199,6 +209,68 @@ socket_server.on("connection", (socket) => {
       newRoomData: rooms[room_id],
       generatedQuestion,
     });
+  });
+
+  // listen for submits
+  socket.on("submit-code", async ({ frontend_user_id, room_id, the_code }) => {
+    if (!the_code) return;
+    const room = rooms[room_id];
+    if (!room) return console.log("didnt found room");
+
+    const player = room.players.find((p) => p.user_id == frontend_user_id);
+    if (player.submitted) return console.log("player alrady submitted");
+
+    player.submitted = true;
+
+    room.submissions.push({
+      user_id: frontend_user_id,
+      code_for_review: the_code,
+    });
+
+    // check if all players submitted
+    const all_submitted = room.players.every((p) => p.submitted == true);
+
+    const currentPlayer = await UserModel.find({ _id: frontend_user_id });
+
+    // send request to gemini
+    if (all_submitted) {
+      const the_prompt = "";
+
+      let generated_scores;
+      try {
+        // off for now
+        // generatedQuestion = await generateAiResponse(the_prompt);
+
+        // ai should generate result something like this
+        // currently only one player is there in frontend for testing purposes
+        generated_scores = [
+          {
+            player_name: currentPlayer.playerName,
+            user_id: frontend_user_id,
+            player_code: the_code,
+            score: 1, // out of 10 lol
+            roast:
+              "wtf wrong with your code!? you only wrote comment instead of code! wish i could give you zero but its out of boundary for me right now, be happy you got 1 you imposter",
+            feedback:
+              "the fk i give you feedback of ? you literally didn't wrote any code just a comment however thats enough roasting if you really wanna learn and solve a problem than atleast write something even if its wrong.",
+          },
+        ];
+      } catch (error) {
+        console.log(error);
+        generated_scores = "all player sucks";
+      }
+
+      room.room_status = "finished";
+      // now frontend can redirect to scores page
+      socket_server.to(room_id).emit("all-player-submitted", {
+        data: generated_scores,
+        room_id: room.room_id,
+      });
+    } else {
+      socket_server.to(room_id).emit("current-player-submitted", {
+        user_id: frontend_user_id,
+      });
+    }
   });
 });
 
