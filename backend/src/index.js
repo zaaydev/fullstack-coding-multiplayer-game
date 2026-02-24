@@ -73,6 +73,7 @@ socket_server.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("socket disconnected");
+
   });
 
   // Each user gets a unique socket.id automatically.
@@ -87,7 +88,7 @@ socket_server.on("connection", (socket) => {
     // 🎲 Generate simple random room ID
     // WHY?
     // So players can share this ID and join same room.
-    const randomId = Math.floor(Math.random() * 100);
+    const randomId = "" + Math.floor(Math.random() * 100);
 
     // 🚪 Join a Socket.IO internal room
     // IMPORTANT:
@@ -183,6 +184,18 @@ socket_server.on("connection", (socket) => {
     socket_server.to(room_id).emit("room-updated", {
       data: room,
     });
+
+    socket.on("player-typing", ({ roomId, userId }) => {
+      socket.emit("show-typing", {
+        userId,
+      });
+    });
+
+    socket.on("player-stop-typing", ({ roomId, userId }) => {
+      socket.emit("hide-typing", {
+        userId,
+      });
+    });
   });
 
   // start game
@@ -270,6 +283,39 @@ socket_server.on("connection", (socket) => {
       socket_server.to(room_id).emit("current-player-submitted", {
         user_id: frontend_user_id,
       });
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("user disconnected:", socket.id);
+
+    // Loop through all rooms
+    for (const roomId in rooms) {
+      const room = rooms[roomId];
+
+      // Find player index by socket id
+      const playerIndex = room.players.findIndex(
+        (player) => player.socket_id === socket.id
+      );
+
+      // If player exists in this room
+      if (playerIndex !== -1) {
+        const disconnectedPlayer = room.players[playerIndex];
+
+        // Remove player from room
+        room.players.splice(playerIndex, 1);
+
+        console.log("Removed player:", disconnectedPlayer.user_id);
+
+        // If host disconnected  
+
+        // Broadcast updated room to remaining players
+        socket_server.to(roomId).emit("player-offline", {
+          data: room,
+        });
+
+        break; // exit loop after handling
+      }
     }
   });
 });

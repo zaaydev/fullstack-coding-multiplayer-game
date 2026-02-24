@@ -10,11 +10,13 @@ import { useEffect } from "react";
 const GameplayPage = () => {
   const [runCode, setRunCode] = useState("");
   const [runKey, setRunKey] = useState(0);
-  const { room, setRoom, setScores, aiQuestion, code, setCode } =
-    useGameStore();
+  const { room, setRoom, setScores, aiQuestion, code, setCode } = useGameStore();
   const { playerAuth } = usePlayerStore();
   const { roomid } = useParams();
   const navigate = useNavigate();
+  const [typingUsers, setTypingUsers] = useState([]);
+  const [typingTimeout, setTypingTimeout] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(300);
 
   function handleRun() {
     setRunCode(code);
@@ -42,13 +44,84 @@ const GameplayPage = () => {
       navigate(`/scores/${payload.room_id}`);
     });
 
-    socket.on("current-player-submitted", (payload) => {});
-
+    socket.on("current-player-submitted", (payload) => { });
+    socket.on("player-offline", (payload) => {
+      alert("offline")
+      console.log(payload.data)
+      setRoom(payload.data)
+    })
     return () => {
       socket.off("all-player-submitted");
       socket.off("current-player-submitted");
+      socket.off("player-offline");
     };
   }, []);
+
+
+
+  const handleChange = (value) => {
+    setCode(value);
+    console.log("object")
+
+    socket.emit("player-typing", {
+      roomId: room.room_id,
+      userId: playerAuth._id,
+    });
+
+    if (typingTimeout) clearTimeout(typingTimeout);
+
+    const timeout = setTimeout(() => {
+      socket.emit("player-stop-typing", {
+        roomId: room.room_id,
+        userId: playerAuth._id,
+      });
+    }, 2000); // 1 second idle
+
+    setTypingTimeout(timeout);
+  };
+
+  useEffect(() => {
+    
+    const handleShowTyping = ({ userId }) => {
+      console.log(userId)
+      setTypingUsers((prev) =>
+        prev.includes(userId) ? prev : [...prev, userId]
+      );
+    };
+
+    const handleHideTyping = ({ userId }) => {
+      console.log(userId)
+      setTypingUsers((prev) =>
+        prev.filter((id) => id !== userId)
+      );
+    };
+
+    socket.on("show-typing", handleShowTyping);
+    socket.on("hide-typing", handleHideTyping);
+
+    return () => {
+      socket.off("show-typing", handleShowTyping);
+      socket.off("hide-typing", handleHideTyping);
+    };
+  }, []);
+
+
+    useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeLeft]);
+
+   // ⬇ Convert seconds → MM:SS
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+
+  const formattedTime = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
 
   return (
     <main className="h-screen w-full bg-zinc-900 text-white flex flex-col overflow-hidden">
@@ -67,7 +140,7 @@ const GameplayPage = () => {
         {/* Timer (fixed width) */}
         <div className="w-[140px] border-l border-zinc-700 flex items-center justify-center shrink-0">
           <div className="bg-zinc-800 px-5 py-2 rounded-lg text-xl font-bold tabular-nums">
-            05:00
+           {formattedTime}
           </div>
         </div>
       </div>
@@ -87,12 +160,18 @@ const GameplayPage = () => {
                 <div className="flex flex-col">
                   <span className="text-zinc-300">{player.user_id}</span>
 
+
                   <span
-                    className={`text-xs ${
-                      player.ready ? "text-green-400" : "text-yellow-400"
-                    }`}
+                    className={`text-xs ${player.ready ? "text-green-400" : "text-yellow-400"
+                      }`}
                   >
                     {player.ready ? "online" : "Coding"}
+                  </span>
+                   <span
+                    className={`text-xs ${(player.user_id == typingUsers) ? "text-yellow-400" : "text-blue-400"
+                      }`}
+                  >
+                    {player.user_id == typingUsers ? "Coding" : "No Coding"}
                   </span>
                 </div>
               </div>
@@ -107,7 +186,7 @@ const GameplayPage = () => {
             <div className="flex-1 flex justify-center items-start min-w-0">
               {/* min-w-0 prevents overflow when inside flex */}
               <div className="w-full max-w-[820px]">
-                <CodeEditor code={code} setCode={setCode} />
+                <CodeEditor code={code} handleChange={handleChange} />
               </div>
             </div>
 
