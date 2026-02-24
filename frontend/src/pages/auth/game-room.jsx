@@ -80,7 +80,7 @@ const RoomPage = () => {
     // 📤 Emit join-room event to backend
     // Send room_id + user ID
     socket.emit("join-room", {
-      room_id: Number(user_input), // 🔢 convert to number
+      room_id: user_input, // 🔢 convert to number
       frontend_user_id: playerAuth._id,
     });
   }
