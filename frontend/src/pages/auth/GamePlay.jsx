@@ -10,7 +10,8 @@ import { useEffect } from "react";
 const GameplayPage = () => {
   const [runCode, setRunCode] = useState("");
   const [runKey, setRunKey] = useState(0);
-  const { room, setRoom, setScores, aiQuestion, code, setCode } = useGameStore();
+  const { room, setRoom, setScores, aiQuestion, code, setCode } =
+    useGameStore();
   const { playerAuth } = usePlayerStore();
   const { roomid } = useParams();
   const navigate = useNavigate();
@@ -39,89 +40,20 @@ const GameplayPage = () => {
   }
 
   useEffect(() => {
+    if (!socket) return;
+
     socket.on("all-player-submitted", (payload) => {
       setScores(payload.data);
       navigate(`/scores/${payload.room_id}`);
     });
 
-    socket.on("current-player-submitted", (payload) => { });
-    socket.on("player-offline", (payload) => {
-      alert("offline")
-      console.log(payload.data)
-      setRoom(payload.data)
-    })
+    socket.on("current-player-submitted", (payload) => {});
+
     return () => {
       socket.off("all-player-submitted");
       socket.off("current-player-submitted");
-      socket.off("player-offline");
     };
   }, []);
-
-
-
-  const handleChange = (value) => {
-    setCode(value);
-    console.log("object")
-
-    socket.emit("player-typing", {
-      roomId: room.room_id,
-      userId: playerAuth._id,
-    });
-
-    if (typingTimeout) clearTimeout(typingTimeout);
-
-    const timeout = setTimeout(() => {
-      socket.emit("player-stop-typing", {
-        roomId: room.room_id,
-        userId: playerAuth._id,
-      });
-    }, 2000); // 1 second idle
-
-    setTypingTimeout(timeout);
-  };
-
-  useEffect(() => {
-    
-    const handleShowTyping = ({ userId }) => {
-      console.log(userId)
-      setTypingUsers((prev) =>
-        prev.includes(userId) ? prev : [...prev, userId]
-      );
-    };
-
-    const handleHideTyping = ({ userId }) => {
-      console.log(userId)
-      setTypingUsers((prev) =>
-        prev.filter((id) => id !== userId)
-      );
-    };
-
-    socket.on("show-typing", handleShowTyping);
-    socket.on("hide-typing", handleHideTyping);
-
-    return () => {
-      socket.off("show-typing", handleShowTyping);
-      socket.off("hide-typing", handleHideTyping);
-    };
-  }, []);
-
-
-    useEffect(() => {
-    if (timeLeft <= 0) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timeLeft]);
-
-   // ⬇ Convert seconds → MM:SS
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-
-  const formattedTime = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-
 
   return (
     <main className="h-screen w-full bg-zinc-900 text-white flex flex-col overflow-hidden">
@@ -133,7 +65,28 @@ const GameplayPage = () => {
             Question
           </h2>
           <p className="text-sm text-zinc-400 leading-relaxed line-clamp-3">
-            {aiQuestion}
+            {aiQuestion && (
+              <div className="space-y-2">
+                <h2 className="text-lg font-bold text-white">
+                  {aiQuestion.title}
+                </h2>
+
+                <p className="text-sm text-zinc-400">{aiQuestion.problem}</p>
+
+                <div className="text-xs text-zinc-500">
+                  <p>
+                    <strong>Input:</strong> {aiQuestion.input_format}
+                  </p>
+                  <p>
+                    <strong>Output:</strong> {aiQuestion.output_format}
+                  </p>
+                  <p>
+                    <strong>Example:</strong> {aiQuestion.example.input} →{" "}
+                    {aiQuestion.example.output}
+                  </p>
+                </div>
+              </div>
+            )}
           </p>
         </div>
 
