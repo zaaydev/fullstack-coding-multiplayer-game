@@ -5,14 +5,15 @@ import cookie_parser from "cookie-parser";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
+import mongoose from "../utils/mongodb.connect.js";
 
 // local imports
 import aiRoutes from "../routes/ai.route.js";
-
+import { score_prompt } from "../lib/prompts/score-prompt.js";
+import { question_prompt } from "../lib/prompts/question-prompt.js";
 import Auth_router from "../routes/auth.routes.js";
-import db from "../utils/mongodb.connect.js";
-import generateAiResponse from "../lib/ai.js";
 import { UserModel } from "../models/user.model.js";
+import generateAiResponse from "../lib/ai.js";
 
 // allow env variables usecase
 dotenv.config();
@@ -71,10 +72,6 @@ const rooms = {};
 socket_server.on("connection", (socket) => {
   console.log("socket connected");
 
-  socket.on("disconnect", () => {
-    console.log("socket disconnected");
-  });
-
   // Each user gets a unique socket.id automatically.
   // This ID represents their live connection session.
 
@@ -87,7 +84,7 @@ socket_server.on("connection", (socket) => {
     // 🎲 Generate simple random room ID
     // WHY?
     // So players can share this ID and join same room.
-    const randomId = Math.floor(Math.random() * 100);
+    const randomId = Math.floor(Math.random() * 100).toString();
 
     // 🚪 Join a Socket.IO internal room
     // IMPORTANT:
@@ -165,7 +162,8 @@ socket_server.on("connection", (socket) => {
     // 📦 Get room from memory
     const room = rooms[room_id];
 
-    // 🔍 Find the correct player object
+    // 🔍
+    //  the correct player object
     // WHY?
     // Because we need to update only this player's ready state.
     const player = room.players.find(
@@ -189,19 +187,28 @@ socket_server.on("connection", (socket) => {
   socket.on("start-game", async ({ frontend_user_id, room_id }) => {
     if (frontend_user_id !== rooms[room_id].host_user_id) return;
 
-    const questionPrompt =
-      "give me very simple coding problem. could be solved with all programming languages. just respond with question, respond with 2 lines max, respond question only";
-
     let generatedQuestion;
     try {
-      // off for now
-      // generatedQuestion = await generateAiResponse(questionPrompt);
-      generatedQuestion = "Given two numbers, calculate their sum.";
+      const aiRaw = await generateAiResponse(question_prompt);
+      generatedQuestion = JSON.parse(aiRaw);
     } catch (error) {
-      console.log(error);
-      generatedQuestion = "nothing generated";
+      console.log("QUESTION AI ERROR:", error);
+
+      generatedQuestion = {
+        title: "Fallback Question",
+        difficulty: "easy",
+        problem: "Given two numbers, calculate their sum.",
+        input_format: "Two integers separated by space.",
+        output_format: "Single integer representing the sum.",
+        example: {
+          input: "2 3",
+          output: "5",
+        },
+      };
     }
 
+    // Store inside room
+    rooms[room_id].generatedQuestion = generatedQuestion;
     rooms[room_id].room_status = "playing";
 
     socket_server.to(room_id).emit("game-started", {
@@ -230,34 +237,36 @@ socket_server.on("connection", (socket) => {
     // check if all players submitted
     const all_submitted = room.players.every((p) => p.submitted == true);
 
-    const currentPlayer = await UserModel.find({ _id: frontend_user_id });
+    const currentPlayer = await UserModel.findOne({ _id: frontend_user_id });
 
     // send request to gemini
     if (all_submitted) {
-      const the_prompt = "";
+      const finalPrompt = `
+        ${score_prompt}
+
+----------------------------------------
+
+Coding Question:
+${JSON.stringify(room.generatedQuestion, null, 2)}
+
+Submissions:
+${JSON.stringify(room.submissions)}
+`;
 
       let generated_scores;
-      try {
-        // off for now
-        // generatedQuestion = await generateAiResponse(the_prompt);
 
-        // ai should generate result something like this
-        // currently only one player is there in frontend for testing purposes
-        generated_scores = [
-          {
-            player_name: currentPlayer.playerName,
-            user_id: frontend_user_id,
-            player_code: the_code,
-            score: 1, // out of 10 lol
-            roast:
-              "wtf wrong with your code!? you only wrote comment instead of code! wish i could give you zero but its out of boundary for me right now, be happy you got 1 you imposter",
-            feedback:
-              "the fk i give you feedback of ? you literally didn't wrote any code just a comment however thats enough roasting if you really wanna learn and solve a problem than atleast write something even if its wrong.",
-          },
-        ];
-      } catch (error) {
-        console.log(error);
-        generated_scores = "all player sucks";
+      try {
+        const aiRaw = await generateAiResponse(finalPrompt);
+        generated_scores = JSON.parse(aiRaw);
+      } catch (err) {
+        console.log("AI ERROR:", err);
+
+        generated_scores = rooms[room_id].submissions.map((player) => ({
+          ...player,
+          score: 0,
+          roast: "AI crashed. Everyone survives.",
+          feedback: "System failure during evaluation.",
+        }));
       }
 
       room.room_status = "finished";
@@ -270,6 +279,45 @@ socket_server.on("connection", (socket) => {
       socket_server.to(room_id).emit("current-player-submitted", {
         user_id: frontend_user_id,
       });
+    }
+  });
+
+  // player disconnected
+
+  socket.on("disconnect", () => {
+    console.log("socket disconnected:", socket.id);
+
+    // Loop through all rooms
+    for (const room_id in rooms) {
+      const room = rooms[room_id];
+
+      if (!room || !room.players) continue;
+
+      // Find player index by socket.id
+      const playerIndex = room.players.findIndex(
+        (player) => player.socket_id === socket.id,
+      );
+
+      // If player exists in this room
+      if (playerIndex !== -1) {
+        const removedPlayer = room.players[playerIndex];
+
+        // Remove player from array
+        room.players.splice(playerIndex, 1);
+
+        console.log(
+          `Removed player ${removedPlayer.user_id} from room ${room_id}`,
+        );
+
+        // 🧠 If host left
+
+        // 📡 Notify remaining players
+        socket_server.to(room_id).emit("player-offline", {
+          data: room,
+        });
+
+        break; // Stop loop once handled
+      }
     }
   });
 });

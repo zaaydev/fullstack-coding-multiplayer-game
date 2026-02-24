@@ -10,7 +10,7 @@ import { useEffect } from "react";
 const GameplayPage = () => {
   const [runCode, setRunCode] = useState("");
   const [runKey, setRunKey] = useState(0);
-  const { room, setRoom, setScores, aiQuestion, code, setCode } =
+  const { room, setRoom, setScores, aiQuestion, setAiQuestion, code, setCode } =
     useGameStore();
   const { playerAuth } = usePlayerStore();
   const { roomid } = useParams();
@@ -37,18 +37,24 @@ const GameplayPage = () => {
   }
 
   useEffect(() => {
+    if (!socket) return;
+
     socket.on("all-player-submitted", (payload) => {
       setScores(payload.data);
       navigate(`/scores/${payload.room_id}`);
     });
 
     socket.on("current-player-submitted", (payload) => {});
+    socket.on("player-offline", (payload) => {
+      setRoom(payload.data);
+    });
 
     return () => {
       socket.off("all-player-submitted");
       socket.off("current-player-submitted");
+      socket.off("player-offline");
     };
-  }, []);
+  }, [socket]);
 
   return (
     <main className="h-screen w-full bg-zinc-900 text-white flex flex-col overflow-hidden">
@@ -60,7 +66,28 @@ const GameplayPage = () => {
             Question
           </h2>
           <p className="text-sm text-zinc-400 leading-relaxed line-clamp-3">
-            {aiQuestion}
+            {aiQuestion && (
+              <div className="space-y-2">
+                <h2 className="text-lg font-bold text-white">
+                  {aiQuestion.title}
+                </h2>
+
+                <p className="text-sm text-zinc-400">{aiQuestion.problem}</p>
+
+                <div className="text-xs text-zinc-500">
+                  <p>
+                    <strong>Input:</strong> {aiQuestion.input_format}
+                  </p>
+                  <p>
+                    <strong>Output:</strong> {aiQuestion.output_format}
+                  </p>
+                  <p>
+                    <strong>Example:</strong> {aiQuestion.example.input} →{" "}
+                    {aiQuestion.example.output}
+                  </p>
+                </div>
+              </div>
+            )}
           </p>
         </div>
 
