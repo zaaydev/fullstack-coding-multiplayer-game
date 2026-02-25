@@ -89,6 +89,7 @@ const RoomPage = () => {
   function handle_ready() {
     // 📤 Tell backend that this player toggled ready state
     // Backend will update room and emit "room-updated"
+    console.log("object")
     socket.emit("player-ready", {
       frontend_user_id: playerAuth._id,
       room_id: room.room_id,

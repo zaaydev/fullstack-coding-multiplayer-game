@@ -36,6 +36,7 @@ const GameplayPage = () => {
       frontend_user_id: playerAuth._id,
       room_id: room.room_id,
       the_code: code,
+      time: timeLeft
     });
   }
 
@@ -54,6 +55,73 @@ const GameplayPage = () => {
       socket.off("current-player-submitted");
     };
   }, []);
+
+  const handleChange = (value) => {
+    setCode(value);
+    console.log("object")
+
+    socket.emit("player-typing", {
+      roomId: room.room_id,
+      userId: playerAuth._id,
+    });
+
+    if (typingTimeout) clearTimeout(typingTimeout);
+
+    const timeout = setTimeout(() => {
+      socket.emit("player-stop-typing", {
+        roomId: room.room_id,
+        userId: playerAuth._id,
+      });
+    }, 2000); // 1 second idle
+
+    setTypingTimeout(timeout);
+  };
+
+  useEffect(() => {
+    
+    const handleShowTyping = ({ userId }) => {
+      console.log(userId)
+      setTypingUsers((prev) =>
+        prev.includes(userId) ? prev : [...prev, userId]
+      );
+    };
+
+    const handleHideTyping = ({ userId }) => {
+      console.log(userId)
+      setTypingUsers((prev) =>
+        prev.filter((id) => id !== userId)
+      );
+    };
+
+    socket.on("show-typing", handleShowTyping);
+    socket.on("hide-typing", handleHideTyping);
+
+    return () => {
+      socket.off("show-typing", handleShowTyping);
+      socket.off("hide-typing", handleHideTyping);
+    };
+  }, []);  
+
+
+
+useEffect(() => {
+    if (timeLeft <= 0){
+      handleSubmit();
+      return;
+    };
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeLeft]);
+
+   // ⬇ Convert seconds → MM:SS
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+
+  const formattedTime = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
   return (
     <main className="h-screen w-full bg-zinc-900 text-white flex flex-col overflow-hidden">

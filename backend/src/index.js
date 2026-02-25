@@ -88,7 +88,7 @@ socket_server.on("connection", (socket) => {
     // 🎲 Generate simple random room ID
     // WHY?
     // So players can share this ID and join same room.
-    const randomId = Math.floor(Math.random() * 100);
+    const randomId = Math.floor(Math.random() * 100).toString();
 
     // 🚪 Join a Socket.IO internal room
     // IMPORTANT:
@@ -187,13 +187,13 @@ socket_server.on("connection", (socket) => {
     });
 
     socket.on("player-typing", ({ roomId, userId }) => {
-      socket.emit("show-typing", {
+      socket_server.to(roomId).emit("show-typing", {
         userId,
       });
     });
 
     socket.on("player-stop-typing", ({ roomId, userId }) => {
-      socket.emit("hide-typing", {
+     socket_server.to(roomId).emit("hide-typing", {
         userId,
       });
     });
@@ -235,7 +235,7 @@ socket_server.on("connection", (socket) => {
   });
 
   // listen for submits
-  socket.on("submit-code", async ({ frontend_user_id, room_id, the_code }) => {
+  socket.on("submit-code", async ({ frontend_user_id, room_id, the_code, time }) => {
     if (!the_code) return;
     const room = rooms[room_id];
     if (!room) return console.log("didnt found room");
@@ -248,6 +248,7 @@ socket_server.on("connection", (socket) => {
     room.submissions.push({
       user_id: frontend_user_id,
       code_for_review: the_code,
+      time_have: time
     });
 
     // check if all players submitted
