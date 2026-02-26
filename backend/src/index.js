@@ -147,6 +147,7 @@ socket_server.on("connection", (socket) => {
       user_id: frontend_user_id,
       socket_id: socket.id,
       ready: false,
+      submitted: false,
     });
 
     // 📡 Broadcast updated room to EVERYONE inside this room
@@ -193,7 +194,7 @@ socket_server.on("connection", (socket) => {
     });
 
     socket.on("player-stop-typing", ({ roomId, userId }) => {
-     socket_server.to(roomId).emit("hide-typing", {
+      socket_server.to(roomId).emit("hide-typing", {
         userId,
       });
     });
@@ -235,30 +236,36 @@ socket_server.on("connection", (socket) => {
   });
 
   // listen for submits
-  socket.on("submit-code", async ({ frontend_user_id, room_id, the_code, time }) => {
-    if (!the_code) return;
-    const room = rooms[room_id];
-    if (!room) return console.log("didnt found room");
+  socket.on(
+    "submit-code",
+    async ({ frontend_user_id, room_id, the_code, time }) => {
+      if (!the_code) return;
+      const room = rooms[room_id];
+      if (!room) return console.log("didnt found room");
 
-    const player = room.players.find((p) => p.user_id == frontend_user_id);
-    if (player.submitted) return console.log("player alrady submitted");
+      const player = room.players.find((p) => p.user_id == frontend_user_id);
+      if (player.submitted) return console.log("player alrady submitted");
 
-    player.submitted = true;
+      player.submitted = true;
 
-    room.submissions.push({
-      user_id: frontend_user_id,
-      code_for_review: the_code,
-      time_have: time
-    });
+      room.submissions.push({
+        user_id: frontend_user_id,
+        code_for_review: the_code,
+        time_have: time,
+      });
 
-    // check if all players submitted
-    const all_submitted = room.players.every((p) => p.submitted == true);
+      // check if all players submitted
+      const all_submitted = room.players.every((p) => p.submitted == true);
 
-    const currentPlayer = await UserModel.findOne({ _id: frontend_user_id });
+      const currentPlayer = await UserModel.findOne({ _id: frontend_user_id });
 
-    // send request to gemini
-    if (all_submitted) {
-      const finalPrompt = `
+      socket_server.to(room_id).emit("room-updated", {
+        data: room,
+      });
+
+      // send request to gemini
+      if (all_submitted) {
+        const finalPrompt = `
         ${score_prompt}
 
 ----------------------------------------
@@ -270,34 +277,31 @@ Submissions:
 ${JSON.stringify(room.submissions)}
 `;
 
-      let generated_scores;
+        let generated_scores;
 
-      try {
-        const aiRaw = await generateAiResponse(finalPrompt);
-        generated_scores = JSON.parse(aiRaw);
-      } catch (err) {
-        console.log("AI ERROR:", err);
+        try {
+          const aiRaw = await generateAiResponse(finalPrompt);
+          generated_scores = JSON.parse(aiRaw);
+        } catch (err) {
+          console.log("AI ERROR:", err);
 
-        generated_scores = rooms[room_id].submissions.map((player) => ({
-          ...player,
-          score: 0,
-          roast: "AI crashed. Everyone survives.",
-          feedback: "System failure during evaluation.",
-        }));
+          generated_scores = rooms[room_id].submissions.map((player) => ({
+            ...player,
+            score: 0,
+            roast: "AI crashed. Everyone survives.",
+            feedback: "System failure during evaluation.",
+          }));
+        }
+
+        room.room_status = "finished";
+        // now frontend can redirect to scores page
+        socket_server.to(room_id).emit("all-player-submitted", {
+          data: generated_scores,
+          room_id: room.room_id,
+        });
       }
-
-      room.room_status = "finished";
-      // now frontend can redirect to scores page
-      socket_server.to(room_id).emit("all-player-submitted", {
-        data: generated_scores,
-        room_id: room.room_id,
-      });
-    } else {
-      socket_server.to(room_id).emit("current-player-submitted", {
-        user_id: frontend_user_id,
-      });
-    }
-  });
+    },
+  );
 });
 
 // ==============================
