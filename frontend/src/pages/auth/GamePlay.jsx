@@ -4,7 +4,7 @@ import OutputScreen from "../../components/editor/output-screen";
 import { useGameStore } from "../../store/game-store";
 import { socket } from "../../lib/socket-io";
 import { usePlayerStore } from "../../store/player-auth-store";
-import { useNavigate, useParams } from "react-router-dom";
+import { data, useNavigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
 
 const GameplayPage = () => {
@@ -30,19 +30,17 @@ const GameplayPage = () => {
   }
 
   async function handleSubmit() {
-    if (!code) return alert("write something");
-
     socket.emit("submit-code", {
       frontend_user_id: playerAuth._id,
       room_id: room.room_id,
-      the_code: code,
-      time: timeLeft,
+      the_code: code || "",
     });
   }
 
   useEffect(() => {
     if (!socket) return;
 
+    console.log(room);
     socket.on("all-player-submitted", (payload) => {
       setScores(payload.data);
       navigate(`/scores/${payload.room_id}`);
@@ -118,17 +116,23 @@ const GameplayPage = () => {
   }, []);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
-      handleSubmit();
-      return;
-    }
+    // user wont be redirected until theres something in room so room is always available
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+    const time_interval = setInterval(() => {
+      const right_now = Date.now();
+      const time_passed = Math.floor((right_now - room.start_time) / 1000);
+      const remaining_time = room.total_time - time_passed;
+
+      if (remaining_time <= 0) {
+        clearInterval(time_interval);
+        handleSubmit();
+      }
+
+      setTimeLeft(remaining_time);
+
+      const safeRemainingTime = remainingTime > 0 ? remainingTime : 0;
     }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timeLeft]);
+  }, []);
 
   // ⬇ Convert seconds → MM:SS
   const minutes = Math.floor(timeLeft / 60);
