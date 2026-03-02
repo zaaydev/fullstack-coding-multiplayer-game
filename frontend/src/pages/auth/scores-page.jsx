@@ -23,7 +23,9 @@ export default function ScorePage() {
       ? Math.max(...scores.map((s) => s.score || 0))
       : null;
 
-  const sortedScores = scores ? [...scores].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)) : [];
+  const sortedScores = scores
+    ? [...scores].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    : [];
 
   const getRankLabel = (idx) => {
     if (idx === 0) return { emoji: "🥇", color: "text-yellow-400" };
@@ -44,7 +46,9 @@ export default function ScorePage() {
       <div className="w-full border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
         <div>
           <span className="font-bold text-lg tracking-tight">CodeBattle</span>
-          <span className="ml-3 text-xs text-zinc-500 font-mono">room/{roomid ?? "—"}</span>
+          <span className="ml-3 text-xs text-zinc-500 font-mono">
+            room/{roomid ?? "—"}
+          </span>
         </div>
         <div className="flex gap-2">
           <button
@@ -67,14 +71,19 @@ export default function ScorePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Results</h1>
           <p className="text-zinc-500 text-sm mt-1">
-            {sortedScores.length} player{sortedScores.length !== 1 ? "s" : ""} · sorted by score
+            {sortedScores.length} player{sortedScores.length !== 1 ? "s" : ""} ·
+            sorted by score
           </p>
         </div>
 
         {loading ? (
-          <div className="text-zinc-500 py-20 text-center text-sm">Waiting for scores...</div>
+          <div className="text-zinc-500 py-20 text-center text-sm">
+            Waiting for scores...
+          </div>
         ) : !sortedScores || sortedScores.length === 0 ? (
-          <div className="text-zinc-500 py-20 text-center text-sm">No scores available.</div>
+          <div className="text-zinc-500 py-20 text-center text-sm">
+            No scores available.
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             {sortedScores.map((s, idx) => {
@@ -95,7 +104,9 @@ export default function ScorePage() {
                   {/* Top row: rank + name + score */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className={`text-xl font-bold flex-shrink-0 ${rank.color}`}>
+                      <span
+                        className={`text-xl font-bold flex-shrink-0 ${rank.color}`}
+                      >
                         {rank.emoji}
                       </span>
                       <div className="min-w-0">
@@ -103,17 +114,39 @@ export default function ScorePage() {
                           {s.player_name ?? s.user_id}
                         </p>
                         {s.player_name && (
-                          <p className="text-xs text-zinc-600 font-mono truncate">{s.user_id}</p>
+                          <p className="text-xs text-zinc-600 font-mono truncate">
+                            {s.user_id}
+                          </p>
                         )}
                       </div>
                     </div>
 
                     {/* Score */}
                     <div className="flex-shrink-0 text-right">
-                      <span className={`text-3xl font-extrabold font-mono ${getScoreColor(score)}`}>
+                      <span
+                        className={`text-3xl font-extrabold font-mono ${getScoreColor(score)}`}
+                      >
                         {score}
                       </span>
                       <span className="text-zinc-600 text-sm">/10</span>
+                    </div>
+
+                    {/* Time Info */}
+                    <div className="mt-2 text-xs text-zinc-500 font-mono">
+                      {s.completed_in && (
+                        <p>
+                          Completed in:{" "}
+                          <span className="text-zinc-300">
+                            {s.completed_in}
+                          </span>
+                        </p>
+                      )}
+                      {typeof s.time_left === "number" && (
+                        <p>
+                          Time left:{" "}
+                          <span className="text-zinc-400">{s.time_left}s</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -121,7 +154,11 @@ export default function ScorePage() {
                   <div className="mt-3 w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
-                        score >= 8 ? "bg-emerald-500" : score >= 5 ? "bg-amber-500" : "bg-red-500"
+                        score >= 8
+                          ? "bg-emerald-500"
+                          : score >= 5
+                            ? "bg-amber-500"
+                            : "bg-red-500"
                       }`}
                       style={{ width: `${pct}%` }}
                     />
@@ -129,13 +166,17 @@ export default function ScorePage() {
 
                   {/* Feedback */}
                   {s.feedback && (
-                    <p className="mt-3 text-sm text-zinc-400 leading-relaxed">{s.feedback}</p>
+                    <p className="mt-3 text-sm text-zinc-400 leading-relaxed">
+                      {s.feedback}
+                    </p>
                   )}
 
                   {/* Roast */}
                   {s.roast && (
                     <div className="mt-3 pt-3 border-t border-zinc-800">
-                      <p className="text-xs text-rose-400/80 italic">"{s.roast}"</p>
+                      <p className="text-xs text-rose-400/80 italic">
+                        "{s.roast}"
+                      </p>
                     </div>
                   )}
                 </div>

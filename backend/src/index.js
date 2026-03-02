@@ -208,6 +208,9 @@ socket_server.on("connection", (socket) => {
     try {
       const aiRaw = await generateAiResponse(question_prompt);
       generatedQuestion = JSON.parse(aiRaw);
+
+      // dummy data
+      // generatedQuestion = "Given two numbers, calculate their sum.";
     } catch (error) {
       console.log("QUESTION AI ERROR:", error);
 
@@ -228,6 +231,10 @@ socket_server.on("connection", (socket) => {
     rooms[room_id].generatedQuestion = generatedQuestion;
     rooms[room_id].room_status = "playing";
 
+    // send time
+    rooms[room_id].start_time = Date.now();
+    rooms[room_id].total_time = 300; // 5 minute
+
     socket_server.to(room_id).emit("game-started", {
       room_id,
       newRoomData: rooms[room_id],
@@ -236,40 +243,42 @@ socket_server.on("connection", (socket) => {
   });
 
   // listen for submits
-  socket.on(
-    "submit-code",
-    async ({ frontend_user_id, room_id, the_code, time }) => {
-      if (!the_code) return;
-      const room = rooms[room_id];
-      if (!room) return console.log("didnt found room");
+  socket.on("submit-code", async ({ frontend_user_id, room_id, the_code }) => {
+    if (!the_code) return;
+    const room = rooms[room_id];
+    if (!room) return console.log("didnt found room");
 
-      const player = room.players.find((p) => p.user_id == frontend_user_id);
-      if (player.submitted) return console.log("player alrady submitted");
+    const player = room.players.find((p) => p.user_id == frontend_user_id);
+    if (player.submitted) return console.log("player alrady submitted");
 
-      player.submitted = true;
+    player.submitted = true;
 
-      room.submissions.push({
-        user_id: frontend_user_id,
-        code_for_review: the_code,
-        time_have: time,
-      });
+    const now = Date.now();
+    const timePassed = Math.floor((now - room.start_time) / 1000);
+    const remainingTime = room.total_time - timePassed;
 
-      // check if all players submitted
-      const all_submitted = room.players.every((p) => p.submitted == true);
+    const safeRemainingTime = remainingTime > 0 ? remainingTime : 0;
 
-      const currentPlayer = await UserModel.findOne({ _id: frontend_user_id });
+    room.submissions.push({
+      user_id: frontend_user_id,
+      code_for_review: the_code,
+      time_left: safeRemainingTime,
+    });
 
-      socket_server.to(room_id).emit("room-updated", {
-        data: room,
-      });
+    // check if all players submitted
+    const all_submitted = room.players.every((p) => p.submitted == true);
 
-      // send request to gemini
-      if (all_submitted) {
-        const finalPrompt = `
+    const currentPlayer = await UserModel.findOne({ _id: frontend_user_id });
+
+    socket_server.to(room_id).emit("room-updated", {
+      data: room,
+    });
+
+    // send request to gemini
+    if (all_submitted) {
+      const finalPrompt = `
         ${score_prompt}
-
-----------------------------------------
-
+        
 Coding Question:
 ${JSON.stringify(room.generatedQuestion, null, 2)}
 
@@ -277,31 +286,37 @@ Submissions:
 ${JSON.stringify(room.submissions)}
 `;
 
-        let generated_scores;
+      let generated_scores;
 
-        try {
-          const aiRaw = await generateAiResponse(finalPrompt);
-          generated_scores = JSON.parse(aiRaw);
-        } catch (err) {
-          console.log("AI ERROR:", err);
+      try {
+        const aiRaw = await generateAiResponse(finalPrompt);
+        generated_scores = JSON.parse(aiRaw);
+      } catch (err) {
+        console.log("AI ERROR:", err);
 
-          generated_scores = rooms[room_id].submissions.map((player) => ({
-            ...player,
-            score: 0,
-            roast: "AI crashed. Everyone survives.",
-            feedback: "System failure during evaluation.",
-          }));
-        }
-
-        room.room_status = "finished";
-        // now frontend can redirect to scores page
-        socket_server.to(room_id).emit("all-player-submitted", {
-          data: generated_scores,
-          room_id: room.room_id,
-        });
+        return {
+          user_id: player.user_id,
+          code_for_review: player.code_for_review,
+          score: 0,
+          time_left: player.time_left,
+          time_taken,
+          completed_in:
+            time_taken < 60
+              ? `${time_taken}s`
+              : `${Math.floor(time_taken / 60)}min ${time_taken % 60}s`,
+          roast: "AI crashed. Lucky escape.",
+          feedback: "System failure during evaluation.",
+        };
       }
-    },
-  );
+
+      room.room_status = "finished";
+      // now frontend can redirect to scores page
+      socket_server.to(room_id).emit("all-player-submitted", {
+        data: generated_scores,
+        room_id: room.room_id,
+      });
+    }
+  });
 });
 
 // ==============================
