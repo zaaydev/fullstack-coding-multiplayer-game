@@ -18,90 +18,122 @@ const LobbyPage = () => {
   const handleJoin = () => {
     console.log("Join room:", roomCode);
   };
-  return (
-    <div className="min-h-screen bg-linear-to-br from-[#262624] to-[#1a1a19] flex items-center justify-center relative overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px),
-                           repeating-linear-gradient(90deg, transparent, transparent 2px, white 2px, white 3px)`,
-            backgroundSize: "50px 50px",
-          }}
-        ></div>
-      </div>
 
-      {/* Floating code elements */}
-      <div className="absolute top-[10%] left-[10%] text-white/10 font-mono text-xl animate-pulse">
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{
+        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+        background: "#07070b",
+      }}
+    >
+      {/* Ambient top glow */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(16,185,129,0.07) 0%, transparent 65%)",
+        }}
+      />
+
+      {/* Grid overlay */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 opacity-[0.018]"
+        style={{
+          backgroundImage:
+            "linear-gradient(#00ff90 1px,transparent 1px),linear-gradient(90deg,#00ff90 1px,transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      {/* Floating code fragments */}
+      <div className="absolute top-[10%] left-[8%] text-emerald-500/10 font-mono text-sm animate-pulse select-none">
         {"{"} code {"}"}
       </div>
-      <div className="absolute top-[20%] right-[15%] text-white/10 font-mono text-xl animate-pulse delay-1000">
+      <div className="absolute top-[18%] right-[10%] text-emerald-500/10 font-mono text-sm animate-pulse select-none" style={{ animationDelay: "1s" }}>
         function()
       </div>
-      <div className="absolute bottom-[15%] left-[8%] text-white/10 font-mono text-xl animate-pulse delay-2000">
+      <div className="absolute bottom-[18%] left-[6%] text-emerald-500/10 font-mono text-sm animate-pulse select-none" style={{ animationDelay: "2s" }}>
         const x =
       </div>
-      <div className="absolute bottom-[25%] right-[12%] text-white/10 font-mono text-xl animate-pulse delay-3000">
+      <div className="absolute bottom-[28%] right-[8%] text-emerald-500/10 font-mono text-sm animate-pulse select-none" style={{ animationDelay: "1.5s" }}>
         {"</>"}
+      </div>
+      <div className="absolute top-[45%] left-[4%] text-emerald-500/8 font-mono text-xs animate-pulse select-none" style={{ animationDelay: "0.5s" }}>
+        while(true)
+      </div>
+      <div className="absolute top-[60%] right-[5%] text-emerald-500/8 font-mono text-xs animate-pulse select-none" style={{ animationDelay: "2.5s" }}>
+        return 0;
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 text-center px-8 max-w-2xl w-full">
+      <div className="relative z-10 text-center px-8 max-w-md w-full flex flex-col items-center">
+
+        {/* Top label */}
+        <div className="flex items-center gap-2 mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/70" style={{ boxShadow: "0 0 6px #10b981" }} />
+          <span className="text-[10px] text-zinc-600 uppercase tracking-widest">
+            multiplayer arena
+          </span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/70" style={{ boxShadow: "0 0 6px #10b981" }} />
+        </div>
+
         {/* Logo */}
-        <h1 className="text-7xl font-black mb-3 bg-gradient-to-r from-[#F9D72F] via-yellow-400 to-amber-300 bg-clip-text text-transparent tracking-tight">
+        <h1
+          className="text-6xl font-black mb-2 tracking-tight"
+          style={{
+            background: "linear-gradient(135deg, #f9d72f 0%, #fbbf24 50%, #f59e0b 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            textShadow: "none",
+            filter: "drop-shadow(0 0 24px rgba(249,215,47,0.25))",
+          }}
+        >
           CodeBattle
         </h1>
 
         {/* Tagline */}
-        <p className="text-xl text-gray-400 mb-16 tracking-widest uppercase">
-          Compete. Code. Conquer.
+        <p className="text-[11px] text-zinc-600 mb-12 tracking-[0.3em] uppercase">
+          Compete · Code · Conquer
         </p>
 
-        {/* Buttons container */}
-        <div className="flex flex-col items-center gap-5">
+        {/* Card container */}
+        <div
+          className="w-full rounded-2xl border border-zinc-800/80 p-6 flex flex-col gap-3"
+          style={{ background: "linear-gradient(180deg, #0d0d12 0%, #0a0a0f 100%)" }}
+        >
           {/* Play button */}
           <button
             onClick={() => navigate("/room")}
-            className="w-72 px-10 py-5 text-xl font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl uppercase tracking-widest shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/60 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl text-sm font-bold uppercase tracking-widest transition-all duration-200 active:scale-95 border border-emerald-500/25 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40"
+            style={{ boxShadow: "0 0 20px rgba(16,185,129,0.06)", }}
           >
-            <span className="relative z-10">Play</span>
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Play
           </button>
 
           {/* Create button */}
           <button
             onClick={handleCreate}
-            className="w-72 px-10 py-5 text-xl font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl uppercase tracking-widest shadow-lg shadow-blue-500/40 hover:shadow-xl hover:shadow-blue-500/60 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl text-sm font-bold uppercase tracking-widest transition-all duration-200 active:scale-95 border border-indigo-500/25 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 hover:border-indigo-500/40"
+            style={{ boxShadow: "0 0 20px rgba(99,102,241,0.06)" }}
           >
-            <span className="relative z-10">Create</span>
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Create Room
           </button>
-
-          {/* Join room container */}
-          <div className="w-72 flex gap-2 p-2 bg-white/5 backdrop-blur-md rounded-xl border-2 border-white/10 focus-within:border-[#F9D72F] focus-within:shadow-lg focus-within:shadow-[#F9D72F]/30 transition-all duration-300">
-            <input
-              type="text"
-              placeholder="Join Room"
-              value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleJoin()}
-              className="flex-1 px-4 py-3 bg-transparent text-white placeholder-gray-500 outline-none text-base"
-            />
-            <button
-              onClick={handleJoin}
-              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold rounded-lg uppercase tracking-wider hover:from-purple-600 hover:to-purple-700 hover:scale-105 transition-all duration-300 text-sm"
-            >
-              Join
-            </button>
-          </div>
         </div>
 
-        {/* Additional decorative elements */}
-        <div className="mt-16 flex justify-center gap-2">
-          <div className="w-2 h-2 bg-[#F9D72F] rounded-full animate-pulse"></div>
-          <div className="w-2 h-2 bg-[#F9D72F] rounded-full animate-pulse delay-150"></div>
-          <div className="w-2 h-2 bg-[#F9D72F] rounded-full animate-pulse delay-300"></div>
+        {/* Bottom dots */}
+        <div className="mt-8 flex justify-center gap-1.5">
+          <div className="w-1 h-1 bg-emerald-500/50 rounded-full animate-pulse" />
+          <div className="w-1 h-1 bg-emerald-500/50 rounded-full animate-pulse" style={{ animationDelay: "150ms" }} />
+          <div className="w-1 h-1 bg-emerald-500/50 rounded-full animate-pulse" style={{ animationDelay: "300ms" }} />
         </div>
       </div>
     </div>
