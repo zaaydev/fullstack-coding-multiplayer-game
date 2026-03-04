@@ -67,8 +67,10 @@ const RoomPage = () => {
   async function handle_create_room() {
     // 📤 Emit event to backend to create a room
     // We send current user's ID so backend knows who is host
+
     socket.emit("create-room", {
       frontend_user_id: playerAuth._id,
+      frontend_user_name: playerAuth.playerName
     });
   }
 
@@ -82,6 +84,7 @@ const RoomPage = () => {
     socket.emit("join-room", {
       room_id: user_input, // 🔢 convert to number
       frontend_user_id: playerAuth._id,
+      frontend_user_name: playerAuth.playerName
     });
   }
 
@@ -167,7 +170,7 @@ const RoomPage = () => {
                     className="flex justify-between items-center bg-zinc-700 px-3 py-2 rounded-lg"
                   >
                     {/* 👤 Player ID */}
-                    <span className="text-xs break-all">{player.user_id}</span>
+                    <span className="text-xs break-all">{player.user_name}</span>
 
                     {/* 🎮 If it's YOU → show Ready button */}
                     {isCurrentUser ? (

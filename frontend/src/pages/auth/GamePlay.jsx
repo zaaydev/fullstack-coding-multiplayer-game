@@ -32,6 +32,7 @@ const GameplayPage = () => {
   async function handleSubmit() {
     socket.emit("submit-code", {
       frontend_user_id: playerAuth._id,
+      frontend_user_name: playerAuth.playerName,
       room_id: room.room_id,
       the_code: code || "",
     });
@@ -200,7 +201,7 @@ const GameplayPage = () => {
                 className="flex justify-between items-center"
               >
                 <div className="flex flex-col">
-                  <span className="text-zinc-300">{player.user_id}</span>
+                  <span className="text-zinc-300">{player.user_name}</span>
 
                   <span
                     className={`text-xs ${
