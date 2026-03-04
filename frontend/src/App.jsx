@@ -7,6 +7,7 @@ import LobbyPage from "./pages/lobby";
 import GameplayPage from "./pages/auth/gameplay";
 import RoomPage from "./pages/auth/game-room";
 import ScorePage from "./pages/auth/scores-page";
+import ViewCodePage from "./pages/ViewCode";
 
 function App() {
   const { playerAuth, checkAuthOnRefresh, isCheckingAuth } = usePlayerStore();
@@ -45,6 +46,7 @@ function App() {
             path="/scores/:roomid"
             element={playerAuth ? <ScorePage /> : <LoginPage />}
           />
+          
         </Routes>
       </BrowserRouter>
     </>

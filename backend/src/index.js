@@ -82,7 +82,7 @@ socket_server.on("connection", (socket) => {
   // ==========================
 
   // This runs when frontend emits "create-room"
-  socket.on("create-room", ({ frontend_user_id }) => {
+  socket.on("create-room", ({ frontend_user_id, frontend_user_name }) => {
     // 🎲 Generate simple random room ID
     // WHY?
     // So players can share this ID and join same room.
@@ -111,6 +111,7 @@ socket_server.on("connection", (socket) => {
       players: [
         {
           user_id: frontend_user_id,
+          user_name: frontend_user_name,
           socket_id: socket.id,
           ready: false, // initially not ready,
           submitted: false,
@@ -132,7 +133,7 @@ socket_server.on("connection", (socket) => {
   // 🚪 JOIN ROOM
   // ==========================
 
-  socket.on("join-room", ({ frontend_user_id, room_id }) => {
+  socket.on("join-room", ({ frontend_user_id, frontend_user_name, room_id }) => {
     // 🚪 Join the internal Socket.IO communication room
     // WHY?
     // So this socket can receive broadcasts for this room.
@@ -143,6 +144,7 @@ socket_server.on("connection", (socket) => {
     // We must track who is inside, their socket id and ready state.
     rooms[room_id].players.push({
       user_id: frontend_user_id,
+      user_name: frontend_user_name,
       socket_id: socket.id,
       ready: false,
       submitted: false,
@@ -164,6 +166,7 @@ socket_server.on("connection", (socket) => {
   socket.on("player-ready", ({ frontend_user_id, room_id }) => {
     // 📦 Get room from memory
     const room = rooms[room_id];
+
 
     // 🔍
     //  the correct player object
@@ -201,6 +204,7 @@ socket_server.on("connection", (socket) => {
   // start game
   socket.on("start-game", async ({ frontend_user_id, room_id }) => {
     if (frontend_user_id !== rooms[room_id].host_user_id) return;
+
 
     let generatedQuestion;
 
@@ -252,13 +256,13 @@ socket_server.on("connection", (socket) => {
   });
 
   // listen for submits
-  socket.on("submit-code", async ({ frontend_user_id, room_id, the_code }) => {
+  socket.on("submit-code", async ({ frontend_user_id, frontend_user_name, room_id, the_code }) => {
     if (!the_code) return;
     const room = rooms[room_id];
     if (!room) return console.log("didnt found room");
 
     const player = room.players.find((p) => p.user_id == frontend_user_id);
-    if (player.submitted) return console.log("player alrady submitted");
+    if (player.submitted) return console.log("player already submitted");
 
     player.submitted = true;
 
@@ -270,12 +274,14 @@ socket_server.on("connection", (socket) => {
 
     room.submissions.push({
       user_id: frontend_user_id,
+      user_name: frontend_user_name,
       code_for_review: the_code,
       time_left: safeRemainingTime,
     });
 
     // check if all players submitted
     const all_submitted = room.players.every((p) => p.submitted == true);
+
 
     socket_server.to(room_id).emit("room-updated", {
       data: room,
@@ -313,6 +319,7 @@ ${JSON.stringify(room.submissions)}
 
         return {
           user_id: player.user_id,
+          user_name: player.user_name,
           code_for_review: player.code_for_review,
           score: 0,
           time_left: player.time_left,
@@ -332,6 +339,36 @@ ${JSON.stringify(room.submissions)}
         data: generated_scores,
         room_id: room.room_id,
       });
+
+      socket.on("view-code", ({ roomId, userId }) => {
+
+        const room = rooms[roomId]; // assuming rooms object hai
+
+        if (!room) {
+          return socket.emit("view-code-data", {
+            error: "Room not found"
+          });
+        }
+
+        const user = room.submissions.find(
+          us => us.user_id === userId
+        );
+        const Score = generated_scores.find(s => s.user_id === userId)
+        const userScore = {...user, ...Score}
+
+        if (!user) {
+          return socket.emit("view-code-data", {
+            error: "User submission not found"
+          });
+        }
+
+        // Emit ONLY to requester
+        socket.emit("view-code-data", {
+          userScore
+        });
+      });
+
+
     }
   });
 
