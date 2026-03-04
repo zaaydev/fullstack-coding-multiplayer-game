@@ -4,10 +4,9 @@ import LoginPage from "./components/auth/login";
 import { useEffect } from "react";
 import { usePlayerStore } from "./store/player-auth-store";
 import LobbyPage from "./pages/lobby";
-import GameplayPage from "./pages/auth/gameplay";
+import GameplayPage from "./pages/auth/GamePlay";
 import RoomPage from "./pages/auth/game-room";
 import ScorePage from "./pages/auth/scores-page";
-import ViewCodePage from "./pages/ViewCode";
 
 function App() {
   const { playerAuth, checkAuthOnRefresh, isCheckingAuth } = usePlayerStore();
