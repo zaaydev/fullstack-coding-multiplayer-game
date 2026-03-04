@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { UserModel } from "../models/user.model.js";
 
-
 /* =====================================================
    ✍️ SIGN-UP CONTROLLER
 ===================================================== */
@@ -55,8 +54,8 @@ export const handleSignUp = async (req, res) => {
       res.cookie("jwt_cookie", token, {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         httpOnly: true, // prevent access via JS
-        sameSite: "none", // protection against CSRF (only when same site)
-        secure: process.env.SERVER_ENV !== "development", // secure in production
+        sameSite: "strict", // protection against CSRF (only when same site)
+        secure: process.env.NODE_ENV === "production", // secure in production
       });
 
       // Save user to DB
@@ -67,6 +66,7 @@ export const handleSignUp = async (req, res) => {
         _id: newUser._id,
         playerName: newUser.playerName,
         email: newUser.email,
+        apiKey: newUser.apiKey,
       });
     } else {
       // User not created for some unexpected reason
@@ -120,8 +120,8 @@ export const handleLogIn = async (req, res) => {
     res.cookie("jwt_cookie", token, {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true, // prevent access via JS
-      sameSite: "none", // protection against CSRF
-      secure: process.env.SERVER_ENV !== "development", // secure in production
+      sameSite: "strict", // protection against CSRF
+      secure: process.env.NODE_ENV === "production", // secure in production
     });
 
     // Send user info (no password)
@@ -129,6 +129,7 @@ export const handleLogIn = async (req, res) => {
       _id: foundUser._id,
       playerName: foundUser.playerName,
       email: foundUser.email,
+      apiKey: foundUser.apiKey,
     });
   } catch (error) {
     console.log(error);
