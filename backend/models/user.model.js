@@ -6,8 +6,9 @@ const userSchema = new mongoose.Schema(
     playerName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    apiKey: { type: String, required: false, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 //2. we create model(collection) of that schemas with "User" name

@@ -12,6 +12,7 @@ import aiRoutes from "../routes/ai.route.js";
 import { score_prompt } from "../lib/prompts/score-prompt.js";
 import { question_prompt } from "../lib/prompts/question-prompt.js";
 import Auth_router from "../routes/auth.routes.js";
+import api_router from "../routes/api.route.js";
 import { UserModel } from "../models/user.model.js";
 import generateAiResponse from "../lib/ai.js";
 
@@ -51,6 +52,7 @@ express_server.use(cookie_parser());
 // routes middlewares
 express_server.use("/api/ai", aiRoutes);
 express_server.use("/api/user", Auth_router);
+express_server.use("/api/user/apikey", api_router);
 
 express_server.get("/", (req, res) => {
   res.send("Hi Server!");
@@ -71,10 +73,6 @@ const rooms = {};
 // This runs EVERY time a user opens your site.
 socket_server.on("connection", (socket) => {
   console.log("socket connected");
-
-  socket.on("disconnect", () => {
-    console.log("socket disconnected");
-  });
 
   // Each user gets a unique socket.id automatically.
   // This ID represents their live connection session.
@@ -189,17 +187,17 @@ socket_server.on("connection", (socket) => {
     socket_server.to(room_id).emit("room-updated", {
       data: room,
     });
+  });
 
-    socket.on("player-typing", ({ roomId, userId }) => {
-      socket_server.to(roomId).emit("show-typing", {
-        userId,
-      });
+  socket.on("player-typing", ({ roomId, userId }) => {
+    socket_server.to(roomId).emit("show-typing", {
+      userId,
     });
+  });
 
-    socket.on("player-stop-typing", ({ roomId, userId }) => {
-      socket_server.to(roomId).emit("hide-typing", {
-        userId,
-      });
+  socket.on("player-stop-typing", ({ roomId, userId }) => {
+    socket_server.to(roomId).emit("hide-typing", {
+      userId,
     });
   });
 
@@ -209,8 +207,19 @@ socket_server.on("connection", (socket) => {
 
 
     let generatedQuestion;
+
+    const hostUser = await UserModel.findById(frontend_user_id);
+
+    if (!hostUser || !hostUser.apiKey) {
+      return socket.emit("error", {
+        message: "Host API key missing",
+      });
+    }
+
+    const apiKey = hostUser.apiKey;
+
     try {
-      const aiRaw = await generateAiResponse(question_prompt);
+      const aiRaw = await generateAiResponse(apiKey, question_prompt);
       generatedQuestion = JSON.parse(aiRaw);
 
       // dummy data
@@ -292,8 +301,18 @@ ${JSON.stringify(room.submissions)}
 
       let generated_scores;
 
+      const hostUser = await UserModel.findById(room.host_user_id);
+
+      if (!hostUser || !hostUser.apiKey) {
+        return socket.emit("error", {
+          message: "Host API key missing",
+        });
+      }
+
+      const apiKey = hostUser.apiKey;
+
       try {
-        const aiRaw = await generateAiResponse(finalPrompt);
+        const aiRaw = await generateAiResponse(apiKey, finalPrompt);
         generated_scores = JSON.parse(aiRaw);
       } catch (err) {
         console.log("AI ERROR:", err);
@@ -350,6 +369,25 @@ ${JSON.stringify(room.submissions)}
       });
 
 
+    }
+  });
+
+  socket.on("disconnect", () => {
+    const player_socket_id = socket.id;
+
+    // loop through all keys in rooms object
+    for (const current_room_id in rooms) {
+      // current room details
+      const curr_room = rooms[current_room_id];
+
+      // remove all players from room if host disconnects
+      if (curr_room.host_socket_id == player_socket_id) {
+        // notify all players
+        socket_server.to(current_room_id).emit("host-left-room");
+
+        // delete room
+        delete rooms[current_room_id];
+      }
     }
   });
 });

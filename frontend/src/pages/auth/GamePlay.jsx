@@ -25,7 +25,7 @@ const GameplayPage = () => {
   }
 
   function handleReset() {
-    setCode("/  / Done Reset! Write your code here");
+    setCode("// Done Reset! Write your code here");
     setRunKey((prev) => prev + 1);
   }
 
@@ -107,10 +107,21 @@ const GameplayPage = () => {
       setTypingUsers((prev) => prev.filter((id) => id !== userId));
     };
 
+    const handleHostClosed = () => {
+      alert("Host closed the room");
+
+      setRoom(null);
+
+      navigate("/room");
+    };
+
+    socket.on("host-left-room", handleHostClosed);
+
     socket.on("show-typing", handleShowTyping);
     socket.on("hide-typing", handleHideTyping);
 
     return () => {
+      socket.off("host-left-room", handleHostClosed);
       socket.off("show-typing", handleShowTyping);
       socket.off("hide-typing", handleHideTyping);
     };
@@ -130,9 +141,9 @@ const GameplayPage = () => {
       }
 
       setTimeLeft(remaining_time);
-
-      const safeRemainingTime = remainingTime > 0 ? remainingTime : 0;
     }, 1000);
+
+    return () => clearInterval(time_interval);
   }, []);
 
   // ⬇ Convert seconds → MM:SS
@@ -142,7 +153,7 @@ const GameplayPage = () => {
   const formattedTime = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
   useEffect(() => {
-    console.log("ROOM:", room);
+    if (!room) navigate("/");
   }, [room]);
 
   return (

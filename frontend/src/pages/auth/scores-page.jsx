@@ -143,6 +143,9 @@ export default function ScorePage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className={`text-xl font-bold flex-shrink-0 ${rank.color}`}>
+                      <span
+                        className={`text-xl font-bold shrink-0 ${rank.color}`}
+                      >
                         {rank.emoji}
                       </span>
                       <div className="min-w-0">

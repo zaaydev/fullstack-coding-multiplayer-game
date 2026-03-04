@@ -4,6 +4,7 @@ import { usePlayerStore } from "../../store/player-auth-store";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGameStore } from "../../store/game-store";
+import { BackendApi } from "../../../api/backend";
 
 const RoomPage = () => {
   // 🧠 Getting logged-in player info from Zustand store
@@ -47,6 +48,14 @@ const RoomPage = () => {
       navigate(`/gameplay/${room_id}`);
     }
 
+    const handleHostClosed = () => {
+      alert("Host closed the room");
+      setRoom(null);
+      navigate("/room");
+    };
+
+    socket.on("host-left-room", handleHostClosed);
+
     // 👂 Listening to socket events from server
     socket.on("connect", handleConnect); // 🔌 connection event
     socket.on("room-created", handleRoomCreated); // 🏠 room created event
@@ -56,6 +65,7 @@ const RoomPage = () => {
     // 🧹 Cleanup when component unmounts
     // Very important to avoid duplicate listeners (memory leak nightmare 😵)
     return () => {
+      socket.off("host-left-room", handleHostClosed);
       socket.off("connect", handleConnect);
       socket.off("room-created", handleRoomCreated);
       socket.off("room-updated", handleRoomUpdated);
@@ -92,7 +102,7 @@ const RoomPage = () => {
   function handle_ready() {
     // 📤 Tell backend that this player toggled ready state
     // Backend will update room and emit "room-updated"
-    console.log("object")
+    console.log("object");
     socket.emit("player-ready", {
       frontend_user_id: playerAuth._id,
       room_id: room.room_id,
@@ -106,22 +116,93 @@ const RoomPage = () => {
     });
   }
 
+  async function handleAddOrEditApiKey() {
+    const key = prompt("Enter your API Key");
+
+    if (!key) return;
+
+    try {
+      const res = await BackendApi.post("/api/user/apikey/add", {
+        apiKey: key,
+      });
+
+      usePlayerStore.getState().setPlayerAuth(res.data);
+
+      alert("API Key saved!");
+    } catch (error) {
+      console.log(error);
+      alert("Failed to save API key");
+    }
+  }
+
+  async function handleRemoveApiKey() {
+    const confirmDelete = confirm(
+      "Are you sure you want to remove your API key?",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const res = await BackendApi.delete("/api/user/apikey/remove");
+
+      usePlayerStore.getState().setPlayerAuth(res.data);
+
+      alert("API Key removed");
+    } catch (error) {
+      console.log(error);
+      alert("Failed to remove API key");
+    }
+  }
+
+  function maskApiKey(key) {
+    if (!key) return null;
+
+    return key.slice(0, 2) + "**********" + key.slice(-2);
+  }
+
   // 🧠 Check if all players are ready
   // If every player.ready === true → Start Game button appears
   const everyone_ready = room?.players.every((p) => p.ready === true);
 
   return (
     <main className="bg-zinc-900 h-screen w-full flex flex-col justify-center items-center">
+      {/* API KEY PANEL */}
+      <div className="absolute top-5 right-5 bg-zinc-800 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3">
+        {playerAuth.apiKey ? (
+          <>
+            <span className="text-xs text-zinc-400">
+              {maskApiKey(playerAuth.apiKey)}
+            </span>
+
+            <button
+              onClick={handleRemoveApiKey}
+              className="text-xs bg-red-500 px-2 py-1 rounded"
+            >
+              Remove
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleAddOrEditApiKey}
+            className="text-xs bg-green-500 px-3 py-1 rounded"
+          >
+            Add API Key
+          </button>
+        )}
+      </div>
+
       {/* 🏗️ CREATE ROOM BUTTON */}
-      <button
-        onClick={handle_create_room}
-        disabled={room} // ❌ disable if already inside a room
-        className={`px-4 py-2 rounded-2xl active:scale-90 mb-2 ${
-          room ? "bg-zinc-600 cursor-not-allowed" : "bg-yellow-500"
-        }`}
-      >
-        Create Room
-      </button>
+      {playerAuth.apiKey && (
+        <button
+          onClick={handle_create_room}
+          disabled={room} // ❌ disable if already inside a room
+          className={`px-4 py-2 rounded-2xl active:scale-90 mb-2 ${
+            room ? "bg-zinc-600 cursor-not-allowed" : "bg-yellow-500"
+          }`}
+        >
+          Create Room
+        </button>
+      )}
 
       {/* 🚪 JOIN ROOM BUTTON */}
       <button
@@ -202,7 +283,7 @@ const RoomPage = () => {
       )}
 
       {/* 🚀 Start Game Button (Only when everyone ready) */}
-      {everyone_ready && (
+      {everyone_ready && room.host_user_id == playerAuth._id && (
         <button
           onClick={start_game}
           className="bg-red-400 text-2xl px-4 py-2 rounded-2xl active:scale-90"
