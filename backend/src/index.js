@@ -34,7 +34,7 @@ const http_server = http.createServer(express_server);
 // Socket.IO sits on top of HTTP and handles real-time communication.
 const socket_server = new Server(http_server, {
   cors: {
-    origin: "*", // allow connections from anywhere (dev mode)
+    origin: process.env.FRONTEND_URL, 
   },
 });
 
