@@ -55,18 +55,21 @@ export default function ScorePage() {
 
   return (
     <div className="min-h-screen w-full bg-[#0f0f0f] text-white relative overflow-hidden">
-
       {/* ── Backdrop ── */}
       <div
         onClick={() => setSelectedUser(null)}
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${selectedUser ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+          selectedUser
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
       />
 
       {/* ── Slide-in Panel ── */}
       <div
-        className={`fixed inset-0 z-50 transition-transform duration-300 ease-in-out overflow-x-hidden ${selectedUser ? "translate-x-0" : "translate-x-full"
-          }`}
+        className={`fixed inset-0 z-50 transition-transform duration-300 ease-in-out overflow-x-hidden ${
+          selectedUser ? "translate-x-0" : "translate-x-full"
+        }`}
         style={{ background: "#07070b" }}
       >
         {selectedUser && (
@@ -132,17 +135,20 @@ export default function ScorePage() {
               return (
                 <div
                   key={s.user_id + idx}
-                  className={`rounded-xl border p-5 transition-all duration-200 ${isSelected
+                  className={`rounded-xl border p-5 transition-all duration-200 ${
+                    isSelected
                       ? "border-indigo-500/40 bg-indigo-500/5"
                       : isWinner
                         ? "border-yellow-500/30 bg-yellow-500/5"
                         : "border-zinc-800 bg-zinc-900/60"
-                    }`}
+                  }`}
                 >
                   {/* Top row: rank + name + score */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className={`text-xl font-bold flex-shrink-0 ${rank.color}`}>
+                      <span
+                        className={`text-xl font-bold shrink-0 ${rank.color}`}
+                      />
                       <span
                         className={`text-xl font-bold shrink-0 ${rank.color}`}
                       >
@@ -162,7 +168,9 @@ export default function ScorePage() {
 
                     {/* Score */}
                     <div className="flex-shrink-0 text-right">
-                      <span className={`text-3xl font-extrabold font-mono ${getScoreColor(score)}`}>
+                      <span
+                        className={`text-3xl font-extrabold font-mono ${getScoreColor(score)}`}
+                      >
                         {score}
                       </span>
                       <span className="text-zinc-600 text-sm">/10</span>
@@ -173,7 +181,9 @@ export default function ScorePage() {
                       {s.completed_in && (
                         <p>
                           Completed in:{" "}
-                          <span className="text-zinc-300">{s.completed_in}</span>
+                          <span className="text-zinc-300">
+                            {s.completed_in}
+                          </span>
                         </p>
                       )}
                       {typeof s.time_left === "number" && (
@@ -188,12 +198,13 @@ export default function ScorePage() {
                   {/* Score bar */}
                   <div className="mt-3 w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-700 ${score >= 8
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        score >= 8
                           ? "bg-emerald-500"
                           : score >= 5
                             ? "bg-amber-500"
                             : "bg-red-500"
-                        }`}
+                      }`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -208,7 +219,9 @@ export default function ScorePage() {
                   {/* Roast */}
                   {s.roast && (
                     <div className="mt-3 pt-3 border-t border-zinc-800">
-                      <p className="text-xs text-rose-400/80 italic">"{s.roast}"</p>
+                      <p className="text-xs text-rose-400/80 italic">
+                        "{s.roast}"
+                      </p>
                     </div>
                   )}
 
@@ -217,24 +230,41 @@ export default function ScorePage() {
                     <button
                       onClick={() =>
                         setSelectedUser(
-                          isSelected ? null : { user_id: s.user_id, roomid }
+                          isSelected ? null : { user_id: s.user_id, roomid },
                         )
                       }
-                      className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95 ${isSelected
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95 ${
+                        isSelected
                           ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25"
                           : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"
-                        }`}
+                      }`}
                     >
                       {isSelected ? (
                         <>
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            className="w-4 h-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <polyline points="20 6 9 17 4 12" />
                           </svg>
                           Viewing
                         </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            className="w-4 h-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                             <circle cx="12" cy="12" r="3" />
                           </svg>
