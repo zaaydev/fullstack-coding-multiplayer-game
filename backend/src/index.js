@@ -75,7 +75,7 @@ socket_server.on("connection", (socket) => {
   console.log("socket connected");
 
   // Each user gets a unique socket.id automatically.
-  // This ID represents their live connection session.
+  // This ID represents their lisve connection session.
 
   // ==========================
   // 🏗 CREATE ROOM
@@ -323,11 +323,11 @@ ${JSON.stringify(room.submissions)}
           code_for_review: player.code_for_review,
           score: 0,
           time_left: player.time_left,
-          time_taken,
-          completed_in:
-            time_taken < 60
-              ? `${time_taken}s`
-              : `${Math.floor(time_taken / 60)}min ${time_taken % 60}s`,
+          // time_taken,
+          // completed_in:
+          //   time_taken < 60
+          //     ? `${time_taken}s`
+          //     : `${Math.floor(time_taken / 60)}min ${time_taken % 60}s`,
           roast: "AI crashed. Lucky escape.",
           feedback: "System failure during evaluation.",
         };
