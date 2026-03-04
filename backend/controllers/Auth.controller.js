@@ -23,7 +23,7 @@ export const handleSignUp = async (req, res) => {
   const userFound = await UserModel.findOne({ email });
 
   if (userFound)
-    return res.status(301).json({ message: "EMAIL ALREADY EXIST!" });
+    return res.status(409).json({ message: "EMAIL ALREADY EXIST!" });
 
   // Continue if validations passed and make password hashed
   try {
@@ -54,7 +54,7 @@ export const handleSignUp = async (req, res) => {
       res.cookie("jwt_cookie", token, {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         httpOnly: true, // prevent access via JS
-        sameSite: "strict", // protection against CSRF (only when same site)
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // protection against CSRF (only when same site)
         secure: process.env.NODE_ENV === "production", // secure in production
       });
 
@@ -120,7 +120,7 @@ export const handleLogIn = async (req, res) => {
     res.cookie("jwt_cookie", token, {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true, // prevent access via JS
-      sameSite: "strict", // protection against CSRF
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // protection against CSRF
       secure: process.env.NODE_ENV === "production", // secure in production
     });
 
