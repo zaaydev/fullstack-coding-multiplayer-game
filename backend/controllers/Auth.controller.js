@@ -56,6 +56,7 @@ export const handleSignUp = async (req, res) => {
         httpOnly: true, // prevent access via JS
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // protection against CSRF (only when same site)
         secure: process.env.NODE_ENV === "production", // secure in production
+         path: "/"
       });
 
       // Save user to DB
@@ -122,6 +123,7 @@ export const handleLogIn = async (req, res) => {
       httpOnly: true, // prevent access via JS
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // protection against CSRF
       secure: process.env.NODE_ENV === "production", // secure in production
+       path: "/"
     });
 
     // Send user info (no password)
