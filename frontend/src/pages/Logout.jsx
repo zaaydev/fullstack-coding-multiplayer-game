@@ -1,6 +1,6 @@
 import React from "react";
 import { BackendApi } from "../../api/backend";
-import useEffect from "react";
+import { useEffect } from "react";
 
 const Logout = () => {
   async function handleLogout() {
