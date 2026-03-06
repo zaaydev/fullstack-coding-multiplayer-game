@@ -52,7 +52,6 @@ export const handleSignUp = async (req, res) => {
 
       // Send token as HTTP-only cookie to frontend
       res.cookie("jwt_cookie", token, {
-         domain: "https://codingo-seven.vercel.app",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         httpOnly: true, // prevent access via JS
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // protection against CSRF (only when same site)
@@ -120,7 +119,6 @@ export const handleLogIn = async (req, res) => {
 
     // Send token as HTTP-only cookie to frontend
     res.cookie("jwt_cookie", token, {
-       domain: "https://codingo-seven.vercel.app",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true, // prevent access via JS
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // protection against CSRF
