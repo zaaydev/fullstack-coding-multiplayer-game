@@ -35,6 +35,10 @@ function App() {
             path="/login"
             element={playerAuth ? <LobbyPage /> : <LoginPage />}
           />
+          <Route
+            path="/logout"
+            element={<Logout />}
+          />
 
           {/* Gameplay Routes */}
           <Route
