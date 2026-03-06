@@ -6,6 +6,7 @@ import { usePlayerStore } from "./store/player-auth-store";
 import LobbyPage from "./pages/lobby";
 import GameplayPage from "./pages/auth/GamePlay";
 import RoomPage from "./pages/auth/game-room";
+import Logout from "./pages/Logout";
 import ScorePage from "./pages/auth/scores-page";
 
 function App() {
@@ -25,7 +26,7 @@ function App() {
             path="/room"
             element={playerAuth ? <RoomPage /> : <LoginPage />}
           />
-  
+
           {/* Auth Routes */}
           <Route
             path="/signup"
@@ -35,10 +36,8 @@ function App() {
             path="/login"
             element={playerAuth ? <LobbyPage /> : <LoginPage />}
           />
-          <Route
-            path="/logout"
-            element={<Logout />}
-          />
+          
+          <Route path="/logout" element={<Logout />} />
 
           {/* Gameplay Routes */}
           <Route
@@ -49,7 +48,6 @@ function App() {
             path="/scores/:roomid"
             element={playerAuth ? <ScorePage /> : <LoginPage />}
           />
-          
         </Routes>
       </BrowserRouter>
     </>
