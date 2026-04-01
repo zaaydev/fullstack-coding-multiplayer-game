@@ -12,7 +12,7 @@ The core focus of this project is understanding:
 
 ## 📸 Screenshots
 
-![Game UI](./frontend/public/screenshots/game.png)
+![Game UI](./frontend/public/game.png)
 
 ---
 
