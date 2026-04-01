@@ -168,6 +168,7 @@ npm run dev
 - Limited code execution sandboxing
 - Small room ID space (possible collisions lol)
 - developers are poor so players will have to provide their gemini api to play. (basically use your own api key to play)
+- missing loading states  
 
 
 ## 🔮 Future Improvements
